@@ -3,7 +3,7 @@
 /// <summary>
 /// القاعدة المشتركة لكل كيانات الهيكل الأكاديمي: معرّف فريد وتوقيتا الإنشاء والتعديل.
 /// </summary>
-public abstract class AuditableEntity
+public abstract class AuditableEntity : IHasCreatedAt, IHasUpdatedAt
 {
     public Guid Id { get; set; }
 

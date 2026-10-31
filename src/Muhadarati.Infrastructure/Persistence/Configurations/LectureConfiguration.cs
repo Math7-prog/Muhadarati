@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Muhadarati.Domain.Academic;
+using Muhadarati.Infrastructure.Identity;
 
 namespace Muhadarati.Infrastructure.Persistence.Configurations;
 
@@ -29,5 +30,10 @@ public class LectureConfiguration : IEntityTypeConfiguration<Lecture>
 
         builder.HasIndex(l => new { l.SubjectId, l.Number, l.ProgramType })
             .IsUnique();
+
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(l => l.UploadedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

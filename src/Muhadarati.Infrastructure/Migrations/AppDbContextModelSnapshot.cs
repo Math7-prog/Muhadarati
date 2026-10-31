@@ -23,6 +23,168 @@ namespace Muhadarati.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text")
+                        .HasColumnName("concurrency_stamp");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_roles");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("roles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text")
+                        .HasColumnName("claim_type");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text")
+                        .HasColumnName("claim_value");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("role_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_role_claims");
+
+                    b.HasIndex("RoleId")
+                        .HasDatabaseName("ix_role_claims_role_id");
+
+                    b.ToTable("role_claims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text")
+                        .HasColumnName("claim_type");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text")
+                        .HasColumnName("claim_value");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_claims");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_user_claims_user_id");
+
+                    b.ToTable("user_claims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text")
+                        .HasColumnName("login_provider");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("text")
+                        .HasColumnName("provider_key");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("text")
+                        .HasColumnName("provider_display_name");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("LoginProvider", "ProviderKey")
+                        .HasName("pk_user_logins");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_user_logins_user_id");
+
+                    b.ToTable("user_logins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("role_id");
+
+                    b.HasKey("UserId", "RoleId")
+                        .HasName("pk_user_roles");
+
+                    b.HasIndex("RoleId")
+                        .HasDatabaseName("ix_user_roles_role_id");
+
+                    b.ToTable("user_roles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text")
+                        .HasColumnName("login_provider");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text")
+                        .HasColumnName("value");
+
+                    b.HasKey("UserId", "LoginProvider", "Name")
+                        .HasName("pk_user_tokens");
+
+                    b.ToTable("user_tokens", (string)null);
+                });
+
             modelBuilder.Entity("Muhadarati.Domain.Academic.College", b =>
                 {
                     b.Property<Guid>("Id")
@@ -168,14 +330,120 @@ namespace Muhadarati.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<Guid>("UploadedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uploaded_by_user_id");
+
                     b.HasKey("Id")
                         .HasName("pk_lectures");
+
+                    b.HasIndex("UploadedByUserId")
+                        .HasDatabaseName("ix_lectures_uploaded_by_user_id");
 
                     b.HasIndex("SubjectId", "Number", "ProgramType")
                         .IsUnique()
                         .HasDatabaseName("ix_lectures_subject_id_number_program_type");
 
                     b.ToTable("lectures", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Academic.LectureFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ConvertedFilePath")
+                        .HasColumnType("text")
+                        .HasColumnName("converted_file_path");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FileExtension")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("file_extension");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size_bytes");
+
+                    b.Property<string>("IndexingStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("indexing_status");
+
+                    b.Property<Guid>("LectureId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lecture_id");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("original_file_name");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("storage_path");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_lecture_files");
+
+                    b.HasIndex("LectureId")
+                        .HasDatabaseName("ix_lecture_files_lecture_id");
+
+                    b.ToTable("lecture_files", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Academic.LectureVideoLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("LectureId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lecture_id");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_lecture_video_links");
+
+                    b.HasIndex("LectureId")
+                        .HasDatabaseName("ix_lecture_video_links_lecture_id");
+
+                    b.ToTable("lecture_video_links", (string)null);
                 });
 
             modelBuilder.Entity("Muhadarati.Domain.Academic.Stage", b =>
@@ -312,6 +580,699 @@ namespace Muhadarati.Infrastructure.Migrations
                     b.ToTable("subject_stage_links", (string)null);
                 });
 
+            modelBuilder.Entity("Muhadarati.Domain.Administration.ActivityLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("action");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("text")
+                        .HasColumnName("details");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_activity_logs");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_activity_logs_user_id");
+
+                    b.ToTable("activity_logs", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Administration.AiFeatureSetting", b =>
+                {
+                    b.Property<string>("FeatureKey")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("feature_key");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DisplayTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("display_title");
+
+                    b.Property<bool>("LocalOnly")
+                        .HasColumnType("boolean")
+                        .HasColumnName("local_only");
+
+                    b.Property<string>("ModelName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("model_name");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("provider");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("FeatureKey")
+                        .HasName("pk_ai_feature_settings");
+
+                    b.ToTable("ai_feature_settings", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Administration.AiUsageStat", b =>
+                {
+                    b.Property<string>("FeatureKey")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("feature_key");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<long>("RequestCount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("request_count");
+
+                    b.HasKey("FeatureKey", "Date")
+                        .HasName("pk_ai_usage_stats");
+
+                    b.ToTable("ai_usage_stats", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Administration.LectureViewStat", b =>
+                {
+                    b.Property<Guid>("LectureId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lecture_id");
+
+                    b.Property<long>("DownloadCount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("download_count");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<long>("ViewCount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("view_count");
+
+                    b.HasKey("LectureId")
+                        .HasName("pk_lecture_view_stats");
+
+                    b.ToTable("lecture_view_stats", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Administration.SystemSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("value");
+
+                    b.HasKey("Key")
+                        .HasName("pk_system_settings");
+
+                    b.ToTable("system_settings", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Announcements.News", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("PublishedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("published_by_user_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_news");
+
+                    b.HasIndex("PublishedByUserId")
+                        .HasDatabaseName("ix_news_published_by_user_id");
+
+                    b.ToTable("news", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Announcements.NewsTarget", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("CollegeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("college_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("department_id");
+
+                    b.Property<Guid>("NewsId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("news_id");
+
+                    b.Property<Guid?>("StageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("stage_id");
+
+                    b.Property<Guid?>("SubjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_id");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("target_type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_news_targets");
+
+                    b.HasIndex("NewsId", "CollegeId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_news_targets_news_id_college_id")
+                        .HasFilter("target_type = 'College'");
+
+                    b.HasIndex("NewsId", "DepartmentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_news_targets_news_id_department_id")
+                        .HasFilter("target_type = 'Department'");
+
+                    b.HasIndex("NewsId", "StageId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_news_targets_news_id_stage_id")
+                        .HasFilter("target_type = 'Stage'");
+
+                    b.HasIndex("NewsId", "SubjectId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_news_targets_news_id_subject_id")
+                        .HasFilter("target_type = 'Subject'");
+
+                    b.ToTable("news_targets", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_news_targets_single_target", "num_nonnulls(college_id, department_id, stage_id, subject_id) = 1");
+                        });
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Notifications.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("message");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<Guid?>("RelatedEntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("related_entity_id");
+
+                    b.Property<string>("RelatedEntityType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("related_entity_type");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notifications");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_notifications_user_id");
+
+                    b.ToTable("notifications", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Notifications.NotificationPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("DailyDigestEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("daily_digest_enabled");
+
+                    b.Property<string>("EmailPreference")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("email_preference");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_notification_preferences");
+
+                    b.ToTable("notification_preferences", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Reports.ErrorReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<Guid?>("LectureFileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lecture_file_id");
+
+                    b.Property<Guid>("LectureId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lecture_id");
+
+                    b.Property<Guid>("ReportedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reported_by_user_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_error_reports");
+
+                    b.HasIndex("LectureFileId")
+                        .HasDatabaseName("ix_error_reports_lecture_file_id");
+
+                    b.HasIndex("LectureId")
+                        .HasDatabaseName("ix_error_reports_lecture_id");
+
+                    b.HasIndex("ReportedByUserId")
+                        .HasDatabaseName("ix_error_reports_reported_by_user_id");
+
+                    b.ToTable("error_reports", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Students.StudentPinnedSubject", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("UserId", "SubjectId")
+                        .HasName("pk_student_pinned_subjects");
+
+                    b.HasIndex("SubjectId")
+                        .HasDatabaseName("ix_student_pinned_subjects_subject_id");
+
+                    b.ToTable("student_pinned_subjects", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Students.StudentProfile", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("PrimaryStageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("primary_stage_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_student_profiles");
+
+                    b.HasIndex("PrimaryStageId")
+                        .HasDatabaseName("ix_student_profiles_primary_stage_id");
+
+                    b.ToTable("student_profiles", (string)null);
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Supervision.SupervisorScope", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("CanDelete")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_delete");
+
+                    b.Property<bool>("CanEdit")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_edit");
+
+                    b.Property<bool>("CanHandleReports")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_handle_reports");
+
+                    b.Property<bool>("CanManageStructure")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_manage_structure");
+
+                    b.Property<bool>("CanPublishNews")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_publish_news");
+
+                    b.Property<bool>("CanUpload")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_upload");
+
+                    b.Property<Guid?>("CollegeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("college_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("department_id");
+
+                    b.Property<string>("ScopeType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("scope_type");
+
+                    b.Property<Guid?>("StageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("stage_id");
+
+                    b.Property<Guid?>("SubjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_supervisor_scopes");
+
+                    b.HasIndex("UserId", "CollegeId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_supervisor_scopes_user_id_college_id")
+                        .HasFilter("scope_type = 'College'");
+
+                    b.HasIndex("UserId", "DepartmentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_supervisor_scopes_user_id_department_id")
+                        .HasFilter("scope_type = 'Department'");
+
+                    b.HasIndex("UserId", "StageId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_supervisor_scopes_user_id_stage_id")
+                        .HasFilter("scope_type = 'Stage'");
+
+                    b.HasIndex("UserId", "SubjectId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_supervisor_scopes_user_id_subject_id")
+                        .HasFilter("scope_type = 'Subject'");
+
+                    b.ToTable("supervisor_scopes", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_supervisor_scopes_single_scope", "num_nonnulls(college_id, department_id, stage_id, subject_id) = 1");
+                        });
+                });
+
+            modelBuilder.Entity("Muhadarati.Infrastructure.Identity.ApplicationUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("access_failed_count");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text")
+                        .HasColumnName("concurrency_stamp");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("display_name");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("email");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("email_confirmed");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("lockout_enabled");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lockout_end");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_email");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_user_name");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text")
+                        .HasColumnName("phone_number");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("phone_number_confirmed");
+
+                    b.Property<int>("PreferredLanguage")
+                        .HasColumnType("integer")
+                        .HasColumnName("preferred_language");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text")
+                        .HasColumnName("security_stamp");
+
+                    b.Property<int>("Theme")
+                        .HasColumnType("integer")
+                        .HasColumnName("theme");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("two_factor_enabled");
+
+                    b.Property<string>("UniversityEmail")
+                        .HasColumnType("text")
+                        .HasColumnName("university_email");
+
+                    b.Property<DateTime?>("UniversityEmailVerifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("university_email_verified_at");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("user_name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_users");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_role_claims_roles_role_id");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_claims_users_user_id");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_logins_users_user_id");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_roles_roles_role_id");
+
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_roles_users_user_id");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_tokens_users_user_id");
+                });
+
             modelBuilder.Entity("Muhadarati.Domain.Academic.Department", b =>
                 {
                     b.HasOne("Muhadarati.Domain.Academic.College", "College")
@@ -333,7 +1294,38 @@ namespace Muhadarati.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_lectures_subjects_subject_id");
 
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_lectures_users_uploaded_by_user_id");
+
                     b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Academic.LectureFile", b =>
+                {
+                    b.HasOne("Muhadarati.Domain.Academic.Lecture", "Lecture")
+                        .WithMany()
+                        .HasForeignKey("LectureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_lecture_files_lectures_lecture_id");
+
+                    b.Navigation("Lecture");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Academic.LectureVideoLink", b =>
+                {
+                    b.HasOne("Muhadarati.Domain.Academic.Lecture", "Lecture")
+                        .WithMany()
+                        .HasForeignKey("LectureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_lecture_video_links_lectures_lecture_id");
+
+                    b.Navigation("Lecture");
                 });
 
             modelBuilder.Entity("Muhadarati.Domain.Academic.Stage", b =>
@@ -381,6 +1373,155 @@ namespace Muhadarati.Infrastructure.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Muhadarati.Domain.Administration.ActivityLog", b =>
+                {
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_activity_logs_users_user_id");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Administration.AiUsageStat", b =>
+                {
+                    b.HasOne("Muhadarati.Domain.Administration.AiFeatureSetting", null)
+                        .WithMany()
+                        .HasForeignKey("FeatureKey")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_ai_usage_stats_ai_feature_settings_feature_key");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Administration.LectureViewStat", b =>
+                {
+                    b.HasOne("Muhadarati.Domain.Academic.Lecture", "Lecture")
+                        .WithMany()
+                        .HasForeignKey("LectureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_lecture_view_stats_lectures_lecture_id");
+
+                    b.Navigation("Lecture");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Announcements.News", b =>
+                {
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("PublishedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_news_users_published_by_user_id");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Announcements.NewsTarget", b =>
+                {
+                    b.HasOne("Muhadarati.Domain.Announcements.News", "News")
+                        .WithMany("Targets")
+                        .HasForeignKey("NewsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_news_targets_news_news_id");
+
+                    b.Navigation("News");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Notifications.Notification", b =>
+                {
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notifications_users_user_id");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Notifications.NotificationPreference", b =>
+                {
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("Muhadarati.Domain.Notifications.NotificationPreference", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_preferences_users_user_id");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Reports.ErrorReport", b =>
+                {
+                    b.HasOne("Muhadarati.Domain.Academic.LectureFile", "LectureFile")
+                        .WithMany()
+                        .HasForeignKey("LectureFileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_error_reports_lecture_files_lecture_file_id");
+
+                    b.HasOne("Muhadarati.Domain.Academic.Lecture", "Lecture")
+                        .WithMany()
+                        .HasForeignKey("LectureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_error_reports_lectures_lecture_id");
+
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ReportedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_error_reports_users_reported_by_user_id");
+
+                    b.Navigation("Lecture");
+
+                    b.Navigation("LectureFile");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Students.StudentPinnedSubject", b =>
+                {
+                    b.HasOne("Muhadarati.Domain.Academic.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_student_pinned_subjects_subjects_subject_id");
+
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_student_pinned_subjects_users_user_id");
+
+                    b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Students.StudentProfile", b =>
+                {
+                    b.HasOne("Muhadarati.Domain.Academic.Stage", "PrimaryStage")
+                        .WithMany()
+                        .HasForeignKey("PrimaryStageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_student_profiles_stages_primary_stage_id");
+
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("Muhadarati.Domain.Students.StudentProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_student_profiles_users_user_id");
+
+                    b.Navigation("PrimaryStage");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Supervision.SupervisorScope", b =>
+                {
+                    b.HasOne("Muhadarati.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_supervisor_scopes_users_user_id");
+                });
+
             modelBuilder.Entity("Muhadarati.Domain.Academic.College", b =>
                 {
                     b.Navigation("Departments");
@@ -403,6 +1544,11 @@ namespace Muhadarati.Infrastructure.Migrations
                     b.Navigation("AdditionalStageLinks");
 
                     b.Navigation("Lectures");
+                });
+
+            modelBuilder.Entity("Muhadarati.Domain.Announcements.News", b =>
+                {
+                    b.Navigation("Targets");
                 });
 #pragma warning restore 612, 618
         }
