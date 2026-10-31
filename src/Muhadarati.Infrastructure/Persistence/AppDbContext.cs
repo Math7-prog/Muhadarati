@@ -20,6 +20,9 @@ public class AppDbContext : DbContext, IAppDbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // تفعيل امتداد pgvector من الآن (قرار متفق عليه) حتى لو جدول المتجهات نفسه يُضاف لاحقاً بالمرحلة 2.
+        modelBuilder.HasPostgresExtension("vector");
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
