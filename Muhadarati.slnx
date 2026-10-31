@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Muhadarati.Api/Muhadarati.Api.csproj" />
+    <Project Path="src/Muhadarati.Application/Muhadarati.Application.csproj" />
+    <Project Path="src/Muhadarati.Domain/Muhadarati.Domain.csproj" />
+    <Project Path="src/Muhadarati.Infrastructure/Muhadarati.Infrastructure.csproj" />
+    <Project Path="src/Muhadarati.Shared/Muhadarati.Shared.csproj" />
+    <Project Path="src/Muhadarati.Web/Muhadarati.Web.csproj" />
+  </Folder>
+</Solution>

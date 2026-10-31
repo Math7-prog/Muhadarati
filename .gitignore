@@ -1,0 +1,29 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Docker / env
+.env
+*.env.local
+
+# Blazor WASM publish
+wwwroot/_framework/
+publish/
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# EF Core
+*.db

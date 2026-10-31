@@ -1,0 +1,58 @@
+services:
+  # قاعدة البيانات: PostgreSQL + pgvector (للبحث الدلالي RAG في المرحلة 2)
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: muhadarati-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-muhadarati}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-muhadarati_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-muhadarati}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-muhadarati}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # تحويل المستندات (Word/PowerPoint إلى PDF) عبر LibreOffice Headless
+  # Gotenberg هو غلاف HTTP جاهز حول LibreOffice headless — بديل عن بناء خدمة مخصصة من الصفر.
+  # إن قرر الفريق التحويل يدوياً عبر soffice داخل Infrastructure مباشرة، يمكن حذف هذه الخدمة لاحقاً
+  # بفضل التجريد الكامل المعتمد لمهمة التحويل (انظر القسم 13.1 من المواصفة).
+  libreoffice-convert:
+    image: gotenberg/gotenberg:8
+    container_name: muhadarati-libreoffice
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+
+  # تنفيذ الأكواد (C++‎ / Java) بعزل كامل
+  # ⚠️ سؤال مفتوح رقم 4 في open-questions: Judge0 أم Piston لم يُحسم بعد.
+  # Piston مُختار هنا كافتراضي أولي لتهيئة المشروع فقط لبساطة تشغيله بخدمة واحدة.
+  # يتطلب Piston صلاحيات موسّعة (privileged) لتشغيل العزل الداخلي (isolate/nsjail)، وهذا طبيعي ومتوقع له.
+  piston:
+    image: ghcr.io/engineer-man/piston
+    container_name: muhadarati-piston
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "2000:2000"
+    volumes:
+      - piston_packages:/piston/packages
+
+  # خادم بريد تجريبي محلي: يستقبل رموز التحقق (OTP) والإشعارات دون إرسال حقيقي
+  # الواجهة على http://localhost:8025 لعرض الرسائل الواردة أثناء التطوير
+  mailpit:
+    image: axllent/mailpit
+    container_name: muhadarati-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # منفذ SMTP تستخدمه خدمة البريد في Infrastructure
+      - "8025:8025"   # واجهة الويب لعرض الرسائل
+
+volumes:
+  postgres_data:
+  piston_packages:
