@@ -5,7 +5,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- AddIdentity وأنواع ASP.NET Core Identity الأساسية تأتي من الإطار المشترك، لا من حزمة NuGet مستقلة -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>

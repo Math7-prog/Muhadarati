@@ -11,6 +11,9 @@ public class Lecture : AuditableEntity
     public Guid SubjectId { get; set; }
     public Subject Subject { get; set; } = null!;
 
+    /// <summary>المستخدم (مشرف/أدمن) الذي رفع المحاضرة.</summary>
+    public Guid UploadedByUserId { get; set; }
+
     public string TitleAr { get; set; } = string.Empty;
     public string? TitleEn { get; set; }
 
