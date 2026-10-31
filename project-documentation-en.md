@@ -4,7 +4,7 @@
 > **Version:** 1.0 (first draft)
 > **Date:** October 31, 2026
 > **Status:** Under team review
-> **Note:** Undecided items are tracked in a separate file: `open-questions.md`
+> **Note:** Undecided items are tracked in a separate file: `open-questions-en.md`
 
 ---
 
@@ -113,7 +113,7 @@ Registration uses **ASP.NET Core Identity** in two separate steps:
 - **Unregistered visitors:** can browse the structure and public news only — no opening or downloading lectures.
 - **Uniqueness constraint on the verified university email:** no more than one account can be verified against the same university email. This alone solves the duplicate-account / doubled AI usage problem, without needing a strict usage cap from day one.
 - **Optional performance safeguard:** the admin panel can still set a daily usage limit per feature if the server ever needs it — purely to protect performance, not to prevent abuse (abuse is already addressed by the uniqueness constraint above).
-- The mail server that sends the verification code is the same one used for notifications; see `open-questions.md`.
+- The mail server that sends the verification code is the same one used for notifications; see `open-questions-en.md`.
 
 ### 3.2 Primary Stage and Browsing
 - The student sets a **primary stage** at registration; its subjects appear on their home page.
@@ -220,7 +220,7 @@ Each student has a private space no one else can see, **where they create their 
 - Built on a **unified abstraction** in code (`Microsoft.Extensions.AI`), with adapters per provider: local models (e.g., Ollama), cloud services with free tiers, or any model trained later.
 - **Goal:** pick the best free, specialized model for each task, instead of searching for one model that does everything.
 - **Requirement for any model:** test its Arabic quality before adopting it.
-- **Preliminary, non-final suggestions** for the most suitable free model per feature are documented in `open-questions.md`, open for discussion rather than final picks.
+- **Preliminary, non-final suggestions** for the most suitable free model per feature are documented in `open-questions-en.md`, open for discussion rather than final picks.
 
 ### 7.2 Answering from the Lecture (RAG)
 The platform **does not train a model** in the first release; it relies on Retrieval-Augmented Generation (RAG):
@@ -403,6 +403,7 @@ Default values, **editable from the admin panel**:
 - Permission checks **on the server** for every request, not only in the UI.
 - C++ and Java run in isolated containers with no network access and no access to server files.
 - Uploaded files are validated (type and size).
+- **The Web project (Blazor WebAssembly) references only Shared**, and never holds a connection string or secret directly — WASM code ships entirely to the student's browser, so anything the project references becomes downloadable by anyone.
 
 ### 12.2 Privacy
 - Student personal data (space, chats, results) stays on their device.
@@ -441,10 +442,15 @@ Default values, **editable from the admin panel**:
 | Local storage | IndexedDB |
 | Office file generation | Open XML SDK, with LibreOffice for PDF conversion |
 
-### 13.2 Deployment Strategy (Decided)
+**Architecture pattern (Decided):** the project follows **Clean Architecture** with a strict dependency rule: Domain depends on nothing; Application depends only on Domain; Infrastructure implements interfaces defined in Application; Api and Web are outer layers, neither depending on the other. Full abstraction (interface + swappable implementation) is reserved for what genuinely needs swapping: AI providers, code execution (Judge0/Piston), file conversion, email sending — not simple CRUD such as managing the academic structure.
+
+### 13.2 Deployment Strategy and Development Environment (Decided)
 - **Development & testing:** the project is deployed on **free hosting** that supports .NET containers and PostgreSQL with pgvector (e.g. Render, Railway or Fly.io for the app; Supabase or Neon for the database) while it is being built and tested.
-- **Production:** the project is **migrated to the college's own server** once it is ready and its specs are confirmed (see `open-questions.md`).
+- **Production:** the project is **migrated to the college's own server** once it is ready and its specs are confirmed (see `open-questions-en.md`).
 - **Hard requirement:** all configuration (database connection strings, AI keys, paths) must be driven entirely by environment variables, with nothing hard-coded, so the move between hosts is smooth.
+- **Local development via Docker:** one shared `docker-compose.yml` runs PostgreSQL+pgvector, the code execution service (Judge0 or Piston — already required), LibreOffice, and a local mail catcher (e.g. Mailpit) that captures verification-code and notification emails locally instead of using a real mail provider's quota during development.
+- **The Api and Web (Blazor) projects run natively** on each developer's machine (`dotnet watch`), not in a container, to avoid slow hot reload and debugging friction.
+- **A `Dockerfile` for the Api project is written starting in Phase 1**, not right before deployment, since most of the suggested free hosting targets deploy from one.
 
 ### 13.3 Architecture Diagram
 
