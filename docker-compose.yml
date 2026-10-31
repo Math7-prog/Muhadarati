@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-muhadarati_dev_password}
       POSTGRES_DB: ${POSTGRES_DB:-muhadarati}
     ports:
-      - "5432:5432"
+      - "5433:5432"  # 5432 الافتراضي مشغول على بعض الأجهزة بخدمة PostgreSQL مثبتة على وندوز نفسه
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
