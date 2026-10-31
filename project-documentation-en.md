@@ -103,15 +103,17 @@ Within a supervisor's scope, the admin grants any of the following:
 
 ## 3. Accounts and Registration
 
-### 3.1 Registration Method
-> ⚠️ **Not decided yet.** Details in `open-questions.md`.
+### 3.1 Registration Method (Decided)
+Registration uses **ASP.NET Core Identity** in two separate steps:
 
-**Preferred proposal:** Sign in with Google or Microsoft, restricted to the university email domain, if the university email runs on one of these platforms. Benefits:
-- No passwords, so nothing to forget.
-- One account per student, with identity verified by the university.
-- Prevents fake accounts.
+1. **Basic registration:** the student signs up with any email address and a password of their choice, required to be **a mix of letters, numbers and symbols** (standard complexity policy). This alone is enough to open and download lectures.
+2. **Additional verification to unlock AI:** the student enters their university email, and an **OTP verification code** is sent to it. Once entered correctly, full AI features are unlocked (chat, explanation, translation, exams, reports, presentations, code execution).
 
-**Alternative:** Registration with any email via ASP.NET Core Identity, with automated password recovery by email.
+**Related rules:**
+- **Unregistered visitors:** can browse the structure and public news only — no opening or downloading lectures.
+- **Uniqueness constraint on the verified university email:** no more than one account can be verified against the same university email. This alone solves the duplicate-account / doubled AI usage problem, without needing a strict usage cap from day one.
+- **Optional performance safeguard:** the admin panel can still set a daily usage limit per feature if the server ever needs it — purely to protect performance, not to prevent abuse (abuse is already addressed by the uniqueness constraint above).
+- The mail server that sends the verification code is the same one used for notifications; see `open-questions.md`.
 
 ### 3.2 Primary Stage and Browsing
 - The student sets a **primary stage** at registration; its subjects appear on their home page.
@@ -136,6 +138,8 @@ Within a supervisor's scope, the admin grants any of the following:
 - **Subjects are added by the admin** (or a supervisor with the manage-structure permission within their scope).
 - **When a department or subject changes** (rename, merge, new addition), it is handled from the panel with no code change.
 - **Proposal:** use **hide/archive** instead of permanent deletion for departments and subjects, so their linked lectures are not lost.
+- **Subjects shared across stages (decided):** one or two subjects are actually shared. The system supports linking a single subject to more than one stage via a link table (`SubjectStageLinks`), so its lectures are uploaded once and appear automatically in every linked stage, with no duplicate uploads.
+- **Morning and evening programs (decided):** lectures are shared by default between the two programs. If a specific lecture's content genuinely differs between them, an additional copy is uploaded and each version is tagged "Morning" or "Evening" — no new level is added to the hierarchy for this.
 
 ---
 
@@ -144,7 +148,7 @@ Within a supervisor's scope, the admin grants any of the following:
 ### 5.1 Uploading Lectures
 - Uploaded by the admin and supervisors according to their permissions and scope.
 - **A lecture can contain more than one file.**
-- Lecture fields: title, description, lecture number/order, parent subject, attached files, upload date, uploader.
+- Lecture fields: title, description, lecture number/order, parent subject, attached files, upload date, uploader, and program type (shared by default, or morning/evening when content differs).
 - **All file formats are allowed for upload and download.**
 
 ### 5.2 In-Site Viewing
@@ -171,9 +175,9 @@ Default values, **editable from the admin panel**:
 | Video | 1 GB |
 | Personal space files | No server limit (stored on the student's device) |
 
-### 5.6 Downloading
-- Downloading is allowed for registered students.
-- **Proposal (undecided):** a per-lecture setting of "download allowed" or "view only", defaulting to "allowed", changed by a supervisor at the lecturer's request. Details in `open-questions.md`.
+### 5.6 Downloading (Decided)
+- **Downloading is always allowed** for all registered students, on every lecture, with no exceptions and no way to disable it.
+- There is no "view only" option in the system. If a lecturer objects to downloads being available, the resolution is to **not publish their lectures on the platform at all**, not to publish them with restrictions.
 
 ### 5.7 AI Indexing
 - When a lecture is uploaded, its text is **automatically extracted in the background** and indexed for semantic search (see 7.2).
@@ -216,6 +220,7 @@ Each student has a private space no one else can see, **where they create their 
 - Built on a **unified abstraction** in code (`Microsoft.Extensions.AI`), with adapters per provider: local models (e.g., Ollama), cloud services with free tiers, or any model trained later.
 - **Goal:** pick the best free, specialized model for each task, instead of searching for one model that does everything.
 - **Requirement for any model:** test its Arabic quality before adopting it.
+- **Preliminary, non-final suggestions** for the most suitable free model per feature are documented in `open-questions.md`, open for discussion rather than final picks.
 
 ### 7.2 Answering from the Lecture (RAG)
 The platform **does not train a model** in the first release; it relies on Retrieval-Augmented Generation (RAG):
@@ -351,6 +356,7 @@ Default values, **editable from the admin panel**:
 
 ### 10.1 Structure and Content Management
 - Manage colleges, departments, stages, subjects and lectures.
+- Link a subject to more than one stage (for shared subjects).
 
 ### 10.2 Users and Permissions
 - Assign supervisors and define their scopes and permissions (Super Admin only).
@@ -435,7 +441,12 @@ Default values, **editable from the admin panel**:
 | Local storage | IndexedDB |
 | Office file generation | Open XML SDK, with LibreOffice for PDF conversion |
 
-### 13.2 Architecture Diagram
+### 13.2 Deployment Strategy (Decided)
+- **Development & testing:** the project is deployed on **free hosting** that supports .NET containers and PostgreSQL with pgvector (e.g. Render, Railway or Fly.io for the app; Supabase or Neon for the database) while it is being built and tested.
+- **Production:** the project is **migrated to the college's own server** once it is ready and its specs are confirmed (see `open-questions.md`).
+- **Hard requirement:** all configuration (database connection strings, AI keys, paths) must be driven entirely by environment variables, with nothing hard-coded, so the move between hosts is smooth.
+
+### 13.3 Architecture Diagram
 
 ```mermaid
 flowchart LR
@@ -470,7 +481,7 @@ flowchart LR
   JOBS --> MAIL
 ```
 
-### 13.3 Where Data Lives
+### 13.4 Where Data Lives
 
 | Data | Location |
 |---|---|
@@ -494,9 +505,10 @@ flowchart LR
 |---|---|---|
 | **Colleges** | Name (Arabic and English), order, status | Has departments |
 | **Departments** | Name, order, status | Belongs to a college; has stages |
-| **Stages** | Name, number, order, status | Belongs to a department; has subjects |
-| **Subjects** | Name, description, order, status | Belongs to a stage; has lectures |
-| **Lectures** | Title, description, number, download allowed, upload date | Belongs to a subject; has files |
+| **Stages** | Name, number, order, status | Belongs to a department; linked to subjects (directly or via `SubjectStageLinks`) |
+| **Subjects** | Name, description, order, status, owning stage | May link to more than one stage via `SubjectStageLinks` (shared subjects); has lectures |
+| **SubjectStageLinks** | — | Links a shared subject to an additional stage beyond its owning stage |
+| **Lectures** | Title, description, number, program type (shared/morning/evening), upload date | Belongs to a subject; has files |
 | **LectureFiles** | Original name, path, format, size, converted copy path, indexing status | Belongs to a lecture |
 | **LectureVideoLinks** | URL, title | Belongs to a lecture |
 | **LectureChunks** | Text, embedding (vector), order | Belongs to a lecture file |
