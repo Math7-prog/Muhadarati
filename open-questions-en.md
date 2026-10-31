@@ -16,6 +16,7 @@ For traceability only — full details now live in `project-documentation-ar.md`
 - **Morning and evening programs:** lectures are shared by default, with an optional tag when they genuinely differ (Section 4.2).
 - **Shared subjects:** resolved — one or two subjects are actually shared, and the system supports this via a link table (Section 4.2 and the data model).
 - **Deployment strategy:** development and testing on free hosting, then migration to the college's server later (Section 13.2/13.3).
+- **The entire Phase 1 database:** the academic structure, Identity, and every remaining table are actually implemented (29 tables), except `LectureChunks` — see `project-status.md` and Sections 14.1/14.1.1/14.1.2 of the specification.
 
 ---
 
@@ -25,7 +26,7 @@ For traceability only — full details now live in `project-documentation-ar.md`
 |---|---|---|---|
 | 1 | College server specs + choice of temporary free hosting | Team + IT department | High |
 | 2 | Mail server (for both verification codes and notifications) | IT department | **Very high** — now core to login itself |
-| 3 | Final model selection for each AI feature | Team | Medium (initial proposal ready below) |
+| 3 | Final model selection for each AI feature | Team | Medium (initial proposal ready below) — **also determines the vector dimension for the deferred `LectureChunks` table** |
 | 4 | Choosing between Judge0 and Piston | Team | Low |
 | 5 | Server-side backup (database and lecture files) | IT department | Medium |
 | 6 | Project name | Team | Low |
@@ -59,6 +60,8 @@ For traceability only — full details now live in `project-documentation-ar.md`
 ## 3. Model Selection per Feature — Initial, Non-Final Proposal
 
 > ⚠️ **Not final.** This is a starting point for discussion, based on recent research (October 2026), not a decision. Free-tier limits from providers change constantly, so verify current numbers in each provider's console before committing.
+
+**Additional note (October 31, 2026):** this decision also fixes the **embedding dimension** for the vector column of the `LectureChunks` table, which is deferred in the database — so that table cannot be created until this question is resolved (every other academic-structure table is already implemented; see `project-status.md`).
 
 **Working assumption:** the team has no GPU right now (settled earlier), so the current focus is on free cloud providers rather than local hosting, while keeping the door open for local hosting later if the college server gets a GPU — which requires no code change thanks to the "swappable model per feature" principle.
 

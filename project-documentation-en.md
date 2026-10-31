@@ -1,7 +1,7 @@
 # University Lectures Platform — Project Documentation
 
 > **Project name:** [To be decided]
-> **Version:** 1.0 (first draft)
+> **Version:** 1.0 (first draft, updated with full Phase 1 database implementation details in Section 14.1 as of October 31, 2026)
 > **Date:** October 31, 2026
 > **Status:** Under team review
 > **Note:** Undecided items are tracked in a separate file: `open-questions-en.md`
@@ -109,6 +109,8 @@ Registration uses **ASP.NET Core Identity** in two separate steps:
 1. **Basic registration:** the student signs up with any email address and a password of their choice, required to be **a mix of letters, numbers and symbols** (standard complexity policy). This alone is enough to open and download lectures.
 2. **Additional verification to unlock AI:** the student enters their university email, and an **OTP verification code** is sent to it. Once entered correctly, full AI features are unlocked (chat, explanation, translation, exams, reports, presentations, code execution).
 
+> **Implementation status (October 31, 2026):** the table structure (`Users` and everything that depends on it) is fully built. The actual registration flow, OTP send/verify logic, and real JWT wiring **have not been built yet** — see the structural decisions in Section 14.1.2.
+
 **Related rules:**
 - **Unregistered visitors:** can browse the structure and public news only — no opening or downloading lectures.
 - **Uniqueness constraint on the verified university email:** no more than one account can be verified against the same university email. This alone solves the duplicate-account / doubled AI usage problem, without needing a strict usage cap from day one.
@@ -137,8 +139,8 @@ Registration uses **ASP.NET Core Identity** in two separate steps:
 - **Every level is managed dynamically** from the admin panel: add, edit, reorder, hide.
 - **Subjects are added by the admin** (or a supervisor with the manage-structure permission within their scope).
 - **When a department or subject changes** (rename, merge, new addition), it is handled from the panel with no code change.
-- **Proposal:** use **hide/archive** instead of permanent deletion for departments and subjects, so their linked lectures are not lost.
-- **Subjects shared across stages (decided):** one or two subjects are actually shared. The system supports linking a single subject to more than one stage via a link table (`SubjectStageLinks`), so its lectures are uploaded once and appear automatically in every linked stage, with no duplicate uploads.
+- **Proposal:** use **hide/archive** instead of permanent deletion for departments and subjects, so their linked lectures are not lost. **(Decided and actually implemented — see 14.1.1: a `Status` column instead of any real deletion.)**
+- **Subjects shared across stages (decided):** one or two subjects are actually shared. The system supports linking a single subject to more than one stage via a link table (`SubjectStageLinks`), so its lectures are uploaded once and appear automatically in every linked stage, with no duplicate uploads. **Expanded during implementation:** the additional stage is allowed to belong to a department entirely different from the owning stage's department (a general-education subject taught across several departments).
 - **Morning and evening programs (decided):** lectures are shared by default between the two programs. If a specific lecture's content genuinely differs between them, an additional copy is uploaded and each version is tagged "Morning" or "Evening" — no new level is added to the hierarchy for this.
 
 ---
@@ -228,7 +230,7 @@ The platform **does not train a model** in the first release; it relies on Retri
 1. **Extract text** from the lecture on upload.
 2. **Split the text** into small chunks.
 3. **Convert chunks to vectors** using an open-source embedding model that supports Arabic and English and runs on a regular CPU without a GPU.
-4. **Store vectors** in PostgreSQL via the pgvector extension.
+4. **Store vectors** in PostgreSQL via the pgvector extension. **(The extension has been enabled on the development database since October 31, 2026; the `LectureChunks` table itself is still deferred to Phase 2, pending the embedding model decision — Open Question 3.)**
 5. **When a student asks:** retrieve the chunks closest to the question and send them with the question to the language model, which composes the answer from them.
 
 **Why RAG and not training?**
@@ -334,10 +336,12 @@ Default values, **editable from the admin panel**:
 - **Published by each supervisor within their permissions and scope** (a department supervisor publishes to their department only); the admin publishes to everyone.
 - **Targeting:** whole college, a department, a stage, or a subject.
 - News targeted at the whole college is **visible to visitors** as well.
+- **Actual implementation (October 31, 2026):** the title and body are **a single free-text field**, not bilingual like the academic structure — a deliberate decision, since news is time-sensitive editorial content the publisher writes once in whichever language they choose, and forcing bilingual authorship would slow down an urgent announcement (full details in 14.1.2).
 
 ### 9.2 Automatic Notifications
 - **A notification when a new lecture is uploaded** to the student's subjects (their primary stage's subjects and subjects they added).
 - **A notification when news is published** for the student's group.
+- **Actual implementation:** every notification carries an optional link back to its source item (lecture or news), so it is clickable and takes the student straight there — an addition beyond the original specification.
 
 ### 9.3 Notification Channels
 - **Email.**
@@ -431,8 +435,8 @@ Default values, **editable from the admin panel**:
 | Backend | ASP.NET Core Web API on .NET 10 (LTS) |
 | Frontend | Blazor WebAssembly |
 | Database | PostgreSQL with the pgvector extension |
-| Data access | Entity Framework Core (Npgsql provider) |
-| Accounts | ASP.NET Core Identity with two-factor authentication |
+| Data access | Entity Framework Core (Npgsql provider) + `EFCore.NamingConventions` for `snake_case` naming |
+| Accounts | ASP.NET Core Identity with two-factor authentication — **table structure fully built; actual registration/sign-in logic is next** |
 | File storage | Server storage outside the database |
 | File conversion | LibreOffice (headless mode) |
 | AI | `Microsoft.Extensions.AI` as the unified abstraction + Ollama for local models + cloud providers |
@@ -441,16 +445,19 @@ Default values, **editable from the admin panel**:
 | C++ and Java execution | Judge0 or Piston (self-hosted in Docker) |
 | Local storage | IndexedDB |
 | Office file generation | Open XML SDK, with LibreOffice for PDF conversion |
+| Auth between Blazor WASM and the API | **JWT (Bearer Token)** — decided; the package is referenced, actual wiring is next |
 
-**Architecture pattern (Decided):** the project follows **Clean Architecture** with a strict dependency rule: Domain depends on nothing; Application depends only on Domain; Infrastructure implements interfaces defined in Application; Api and Web are outer layers, neither depending on the other. Full abstraction (interface + swappable implementation) is reserved for what genuinely needs swapping: AI providers, code execution (Judge0/Piston), file conversion, email sending — not simple CRUD such as managing the academic structure.
+**Architecture pattern (Decided):** the project follows **Clean Architecture** with a strict dependency rule: Domain depends on nothing — not even on ASP.NET Core Identity (`ApplicationUser` lives exclusively in Infrastructure); Application depends only on Domain (and holds the `IAppDbContext` abstraction, with no reference to Npgsql or Identity); Infrastructure implements the interfaces defined in Application (and holds the real `AppDbContext`, inherited from `IdentityDbContext`); Api and Web are outer layers, neither depending on the other. Full abstraction is reserved for what genuinely needs swapping — not simple CRUD (**implemented in practice**: no separate repository per entity, just one `IEntityTypeConfiguration` per entity with a direct `DbSet` through `IAppDbContext`).
 
 ### 13.2 Deployment Strategy and Development Environment (Decided)
 - **Development & testing:** the project is deployed on **free hosting** that supports .NET containers and PostgreSQL with pgvector (e.g. Render, Railway or Fly.io for the app; Supabase or Neon for the database) while it is being built and tested.
 - **Production:** the project is **migrated to the college's own server** once it is ready and its specs are confirmed (see `open-questions-en.md`).
 - **Hard requirement:** all configuration (database connection strings, AI keys, paths) must be driven entirely by environment variables, with nothing hard-coded, so the move between hosts is smooth.
-- **Local development via Docker:** one shared `docker-compose.yml` runs PostgreSQL+pgvector, the code execution service (Judge0 or Piston — already required), LibreOffice, and a local mail catcher (e.g. Mailpit) that captures verification-code and notification emails locally instead of using a real mail provider's quota during development.
-- **The Api and Web (Blazor) projects run natively** on each developer's machine (`dotnet watch`), not in a container, to avoid slow hot reload and debugging friction.
-- **A `Dockerfile` for the Api project is written starting in Phase 1**, not right before deployment, since most of the suggested free hosting targets deploy from one.
+- **Local development via Docker:** one shared `docker-compose.yml` runs PostgreSQL+pgvector (published on host port **5433**, not 5432 — to avoid a possible conflict with a native PostgreSQL install on a developer's Windows machine; see `project-status.md` Section 7.1), the code execution service (Judge0 or Piston — already required), LibreOffice, and a local mail catcher (e.g. Mailpit).
+- **The Api and Web (Blazor) projects run natively** on each developer's machine (`dotnet watch`), not in a container.
+- **A `Dockerfile` for the Api project is written starting in Phase 1**, not right before deployment.
+- **The `.env` file must be saved with LF line endings, not CRLF** — Docker Compose parses it the Linux way, and Windows line endings silently embed a hidden `\r` inside values (such as the database password), breaking authentication with no clear error.
+- **The Infrastructure project needs `<FrameworkReference Include="Microsoft.AspNetCore.App" />`** in its `.csproj` — `AddIdentity` and the core Identity types come from the ASP.NET Core shared framework, not a standalone NuGet package, and are not available by default in a plain class library project (`Microsoft.NET.Sdk`).
 
 ### 13.3 Architecture Diagram
 
@@ -507,31 +514,75 @@ flowchart LR
 
 ### 14.1 Server Tables
 
+**All tables below are ✅ actually implemented on the development database (29 tables, October 31, 2026), except `LectureChunks`, which is deferred.**
+
 | Table | Key fields | Relationships |
 |---|---|---|
-| **Colleges** | Name (Arabic and English), order, status | Has departments |
-| **Departments** | Name, order, status | Belongs to a college; has stages |
-| **Stages** | Name, number, order, status | Belongs to a department; linked to subjects (directly or via `SubjectStageLinks`) |
-| **Subjects** | Name, description, order, status, owning stage | May link to more than one stage via `SubjectStageLinks` (shared subjects); has lectures |
-| **SubjectStageLinks** | — | Links a shared subject to an additional stage beyond its owning stage |
-| **Lectures** | Title, description, number, program type (shared/morning/evening), upload date | Belongs to a subject; has files |
-| **LectureFiles** | Original name, path, format, size, converted copy path, indexing status | Belongs to a lecture |
-| **LectureVideoLinks** | URL, title | Belongs to a lecture |
-| **LectureChunks** | Text, embedding (vector), order | Belongs to a lecture file |
-| **Users** | (ASP.NET Identity) + name, preferred language, theme | — |
-| **StudentProfiles** | Primary stage | Belongs to a user |
-| **StudentPinnedSubjects** | — | Links a student to an extra subject |
-| **SupervisorScopes** | Scope type (college/department/stage/subject), scope ID, permissions | Belongs to a user |
-| **News** | Title, body, publish date | Published by a user |
-| **NewsTargets** | Target type, target ID | Belongs to a news item |
-| **Notifications** | Type, text, read flag | Belongs to a user |
-| **NotificationPreferences** | Email (news/lectures/all/none), daily digest | Belongs to a user |
-| **ErrorReports** | Description, status | Linked to a lecture or file and a student |
-| **ActivityLogs** | Action, item type, item ID, details, timestamp | Belongs to a user |
-| **AiFeatureSettings** | Feature, provider, model, endpoint, local-only flag | — |
-| **SystemSettings** | Key, value (file limits, execution limits, etc.) | — |
-| **LectureViewStats** | View and download counts | Belongs to a lecture |
-| **AiUsageStats** | Feature, count, date | — |
+| **Colleges** ✅ | Name (Arabic and English), order, status | Has departments |
+| **Departments** ✅ | Name, order, status | Belongs to a college; has stages |
+| **Stages** ✅ | Name, number, order, status | Belongs to a department; linked to subjects (directly or via `SubjectStageLinks`) |
+| **Subjects** ✅ | Name, description, order, status, owning stage | May link to more than one stage via `SubjectStageLinks` (shared subjects, even across different departments); has lectures |
+| **SubjectStageLinks** ✅ | — | Links a shared subject to an additional stage beyond its owning stage |
+| **Lectures** ✅ (metadata only so far) | Title, description, number, program type, upload date, status, **uploader (`UploadedByUserId`)** | Belongs to a subject; has files |
+| **LectureFiles** ✅ | Original name, path, format, size, converted copy path, indexing status | Belongs to a lecture |
+| **LectureVideoLinks** ✅ | URL, title | Belongs to a lecture |
+| **LectureChunks** ⏸️ deferred to Phase 2 | Text, embedding (vector), order | Belongs to a lecture file — waiting on the embedding model decision (Open Question 3) |
+| **Users** ✅ (Identity table, renamed from `AspNetUsers`) | (ASP.NET Identity) + name, preferred language, theme, university email and its verification timestamp | — |
+| **Roles / UserRoles / UserClaims / UserLogins / UserTokens / RoleClaims** ✅ (standard Identity tables, renamed) | — | Only Student/Supervisor/Admin are currently used |
+| **StudentProfiles** ✅ | Primary stage | Belongs to a user (1:1) |
+| **StudentPinnedSubjects** ✅ | — | Links a student to an extra subject |
+| **SupervisorScopes** ✅ | Scope type, scope ID (4 nullable columns under a CHECK constraint), 6 boolean permissions | Belongs to a user |
+| **News** ✅ | Title, body (a single free-text field) | Published by a user |
+| **NewsTargets** ✅ | Target type, target ID (same CHECK pattern) | Belongs to a news item |
+| **Notifications** ✅ | Type, text, optional link to the source item, read timestamp | Belongs to a user |
+| **NotificationPreferences** ✅ | Email (news/lectures/all/none), daily digest | Belongs to a user (1:1) |
+| **ErrorReports** ✅ | Description, status | Linked to a lecture or file and a student |
+| **ActivityLogs** ✅ | Action, item type (no real foreign key — intentional), item ID, details, timestamp | Belongs to a user |
+| **AiFeatureSettings** ✅ | Feature (primary key), provider, model, title, local-only flag | — |
+| **SystemSettings** ✅ | Key (primary key), value | — |
+| **LectureViewStats** ✅ | View and download counts | Belongs to a lecture (1:1) |
+| **AiUsageStats** ✅ | Feature, date (composite key), request count | — |
+
+### 14.1.1 Actual Implementation Details — Academic Structure (October 31, 2026)
+
+The first six tables above were actually implemented with Entity Framework Core 10 and applied as a real migration on a development database (Postgres in a Docker container). The following detailed decisions were made during this implementation and are binding on any later code that touches these tables:
+
+- **Primary key:** `Guid` (version 7, time-ordered) for every real entity, except `SubjectStageLinks` (composite key, see below).
+- **Bilingual names:** two columns, `NameAr` (text, **always required**) and `NameEn` (text, **optional**), on each of Colleges, Departments, Stages, Subjects. If `NameEn` is empty, the English UI falls back to `NameAr`. The same principle applies to the optional `DescriptionAr`/`DescriptionEn` fields on Subjects.
+- **Status instead of deletion:** a `Status` column with three values (`Visible`/`Hidden`/`Archived`) on all six tables — **including Lectures**, even though the original specification in Section 14.1 did not explicitly call for it there. Nothing in the academic structure is ever hard-deleted from code.
+- **`SubjectStageLinks`:** a pure link table with no independent `Id` — its primary key is the composite `(SubjectId, StageId)`. The rule "the additional stage must differ from the owning stage" is an application-level check, not a database constraint.
+- **Unique indexes:** `(DepartmentId, Number)` on Stages, and `(SubjectId, Number, ProgramType)` on Lectures.
+- **Database naming:** fully `snake_case`, automatically, via the `EFCore.NamingConventions` package (e.g., the table `subject_stage_links`, the column `name_ar`).
+- **Enums are stored as text** (e.g. `"Visible"`, `"Morning"`), not as numbers, for direct readability in the database and to avoid breaking on reordered enum values in code.
+- **Audit fields:** `CreatedAt`/`UpdatedAt` in UTC, filled in automatically by code on save (never entered manually).
+- **pgvector:** the extension is actually enabled on the development database (version 0.8.7 confirmed), even though the `LectureChunks` table itself is still deferred to Phase 2 per the original plan.
+
+### 14.1.2 Actual Implementation Details — Identity and All Remaining Tables (October 31, 2026)
+
+**Governing structural decisions:**
+- **`ApplicationUser : IdentityUser<Guid>` lives exclusively in the Infrastructure layer.** Domain never references it at all — other Domain entities (`StudentProfile`, `Lecture.UploadedByUserId`...) store a plain `Guid UserId`, with no knowledge of the actual class, and it is the Infrastructure-layer configurations that wire up the real foreign key in the database (`HasOne<ApplicationUser>()` with no navigation property on either side).
+- **Standard Identity roles** (`Student`, `Supervisor`, `Admin`) are used only for coarse classification, via `AspNetRoles`/`AspNetUserRoles` (renamed to `roles`/`user_roles`). The fine-grained details (which scope, which permission) live only in the dedicated `SupervisorScopes` table.
+- **Extra fields on `Users`:** `DisplayName`, `PreferredLanguage` (Arabic/English), `Theme` (Light/Dark/Auto), `UniversityEmail` (empty until verified), `UniversityEmailVerifiedAt` (empty = not verified; a real timestamp = when OTP verification succeeded).
+- **Authentication:** **JWT**, not a cookie (fits a Blazor WASM app talking to a separate API). The package (`Microsoft.AspNetCore.Authentication.JwtBearer`) has been added; **actually wiring it into `Program.cs` (issuing/validating the token) has not happened yet.**
+- **2FA** is built on Identity's own ready-made mechanism (`TwoFactorEnabled`); making it mandatory for supervisors/admins is application logic to be built in the upcoming registration step.
+
+**`SupervisorScopes` and `NewsTargets` design (multi-type scope):**
+Instead of one untyped `ScopeId` column, the design uses 4 nullable columns (`CollegeId/DepartmentId/StageId/SubjectId`) plus a **PostgreSQL `CHECK` constraint** (`num_nonnulls(...) = 1`) guaranteeing exactly one is populated. **A design correction found during the build:** a single composite unique index across the four nullable columns **does not actually prevent duplicates**, because Postgres treats every `NULL` as distinct from every other `NULL`, even under a uniqueness constraint. The correct fix that was applied: **four separate partial unique indexes**, each filtered with `WHERE scope_type = '...'` — confirmed by inspecting the table structure directly after applying the migration.
+
+**Two deliberate exceptions to the "real foreign key" pattern:**
+- `ActivityLog.EntityId` has no constraint — the set of possible item types is large and open-ended (lecture, college, news...), unlike the four fixed types in `SupervisorScope`/`NewsTarget`.
+- `Notification.RelatedEntityType`/`RelatedEntityId` — same reason, an addition beyond the original specification to make a notification clickable and navigable.
+
+**Other design decisions:**
+- `News`: a single field (`Title`/`Content`), not bilingual — time-sensitive editorial content the publisher writes once in one language, unlike the fixed names of the academic structure.
+- `AiFeatureSettings`: its primary key is `FeatureKey` itself (an enum stored as text: Chat/Explanation/Translation/ExamGeneration/ExamGrading/Reports/Presentations/CodeGeneration) — one fixed row per feature, no separate `Id`.
+- `SystemSettings`: a genuinely free key/value store (`Key` is an open text field, not an enum), since it covers a varied, open-ended set of settings (file limits, execution limits, mail).
+- `LectureViewStats`, `StudentProfiles`, `NotificationPreferences`: true 1:1 relationships, with no separate `Id` — the same pattern as `SubjectStageLinks` in the previous step.
+- **Identity tables renamed** from the default `AspNet*` prefix to names matching the specification's own terminology (`users`, `roles`, `user_roles`, `user_claims`, `user_logins`, `user_tokens`, `role_claims`).
+
+**A build issue encountered and resolved:** `AddIdentity` is not available by default in a plain class library project — details in Section 13.2.
+
+**Actual verification (confirmed):** `dotnet build` succeeded, a single migration (`AddIdentityAndCoreTables`) was applied, exactly **29 tables** were confirmed by direct inspection, and the `CHECK` constraint, the four partial indexes, and the foreign key on `supervisor_scopes` were all confirmed exactly as designed by inspecting the table structure directly after applying the migration.
 
 ### 14.2 Student Device Stores (IndexedDB)
 
@@ -569,6 +620,7 @@ flowchart LR
 | **pgvector** | A PostgreSQL extension that stores and searches vectors |
 | **Fine-tuning** | Further training a ready-made model on custom data |
 | **2FA** | Two-factor authentication: a second verification step after the password |
+| **JWT** | A Bearer Token the server issues after sign-in, attached by the student to every later request, instead of a traditional cookie-based session |
 | **IndexedDB** | A database inside the browser for storing data on the user's device |
 | **PWA** | Progressive Web App: a web app installable on phones and computers |
 | **Docker** | Container technology for running programs in an isolated environment |
